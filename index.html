@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>스마트 복약 체크 타이머</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="logo">
+          <span class="logo-icon">💊</span>
+          <h1>복약 체크 타이머</h1>
+        </div>
+
+        <div class="today">
+          <span id="todayDate"></span>
+        </div>
+      </header>
+
+      <section class="welcome">
+        <div>
+          <p class="welcome-label">DAILY MEDICATION</p>
+
+          <h2>오늘도 건강을 챙겨볼까요?</h2>
+
+          <p>잊지 않고 챙기는 작은 습관이 건강을 만듭니다.</p>
+        </div>
+
+        <div class="welcome-icon">🌿</div>
+      </section>
+
+      <section class="summary">
+        <div class="summary-card">
+          <p>오늘의 복약 일정</p>
+          <h3 id="totalCount">0개</h3>
+        </div>
+
+        <div class="summary-card">
+          <p>복용 완료</p>
+          <h3 id="completedCount">0개</h3>
+        </div>
+
+        <div class="summary-card">
+          <p>남은 복약</p>
+          <h3 id="remainingCount">0개</h3>
+        </div>
+      </section>
+
+      <main class="medication-section">
+        <div class="section-header">
+          <div>
+            <h2>오늘의 복약 목록</h2>
+
+            <p>오늘 챙겨야 할 약과 영양제를 확인하세요.</p>
+          </div>
+
+          <button class="add-button" id="addButton">+ 약 추가</button>
+        </div>
+
+        <div id="medicationList" class="medication-list"></div>
+      </main>
+
+      <section class="quick-add-section">
+        <h2>빠른 추가</h2>
+
+        <p>자주 먹는 영양제를 간편하게 등록하세요.</p>
+
+        <div class="quick-add-buttons">
+          <button class="quick-button" data-name="유산균" data-icon="🥛">
+            🥛 유산균
+          </button>
+
+          <button class="quick-button" data-name="오메가3" data-icon="🐟">
+            🐟 오메가3
+          </button>
+
+          <button class="quick-button" data-name="비타민" data-icon="🍊">
+            🍊 비타민
+          </button>
+        </div>
+      </section>
+
+      <section class="test-section">
+        <div>
+          <h3>알림 테스트</h3>
+
+          <p>10초 뒤 알림이 작동하는지 확인할 수 있습니다.</p>
+        </div>
+
+        <button id="testNotificationButton">10초 뒤 알림 테스트</button>
+      </section>
+
+      <footer class="footer">
+        <p>스마트 복약 체크 타이머 · 건강한 하루를 위한 작은 습관</p>
+      </footer>
+    </div>
+
+    <!-- <script src="script.js"></script> -->
+  </body>
+</html>

@@ -1,0 +1,442 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Noto Sans KR", sans-serif;
+  background-color: #f5f8f5;
+  color: #26352d;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 35px 25px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 30px;
+}
+
+.logo h1 {
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.today {
+  color: #758379;
+  font-size: 14px;
+}
+
+.welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: #e5f2e8;
+
+  border-radius: 20px;
+  padding: 35px;
+  margin-bottom: 25px;
+}
+
+.welcome-label {
+  color: #5b9470;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.welcome h2 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+
+.welcome p:last-child {
+  font-size: 14px;
+  color: #6e8073;
+}
+
+.welcome-icon {
+  font-size: 65px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 35px;
+}
+
+.summary-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #e9eee9;
+}
+
+.summary-card p {
+  font-size: 14px;
+  color: #7b887e;
+  margin-bottom: 12px;
+}
+
+.summary-card h3 {
+  font-size: 27px;
+  color: #3e7953;
+}
+
+.medication-section {
+  margin-bottom: 35px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2,
+.quick-add-section h2 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.section-header p,
+.quick-add-section > p {
+  font-size: 13px;
+  color: #849087;
+}
+
+.add-button {
+  background: #4b8b60;
+  color: white;
+
+  padding: 12px 20px;
+  border-radius: 10px;
+
+  font-size: 14px;
+}
+
+.add-button:hover {
+  background: #3d754f;
+}
+
+.medication-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.medication-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+  border: 1px solid #e9eee9;
+  border-radius: 15px;
+
+  padding: 22px;
+}
+
+.medication-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.medication-icon {
+  width: 50px;
+  height: 50px;
+
+  background: #edf5ee;
+  border-radius: 13px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 25px;
+}
+
+.medication-info h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.medication-info p {
+  font-size: 13px;
+  color: #879187;
+}
+
+.medication-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-label {
+  font-size: 13px;
+  color: #728076;
+}
+
+.check-button {
+  background: #edf5ee;
+  color: #4b8b60;
+
+  padding: 10px 16px;
+  border-radius: 9px;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.check-button:hover {
+  background: #dcebdd;
+}
+
+.check-button.completed {
+  background: #4b8b60;
+  color: white;
+}
+
+.delete-button {
+  background: transparent;
+  color: #a0aaa1;
+
+  font-size: 22px;
+  padding: 5px;
+}
+
+.delete-button:hover {
+  color: #e05252;
+}
+
+.medication-card.is-completed {
+  background: #f9fbf9;
+}
+
+.medication-card.is-completed .medication-info h3 {
+  text-decoration: line-through;
+  color: #8b968d;
+}
+
+.empty-message {
+  background: white;
+  border: 1px solid #e9eee9;
+  border-radius: 15px;
+
+  padding: 45px 20px;
+
+  text-align: center;
+  color: #879187;
+  font-size: 14px;
+}
+
+.quick-add-section {
+  background: white;
+
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #e9eee9;
+
+  margin-bottom: 25px;
+}
+
+.quick-add-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 20px;
+}
+
+.quick-button {
+  background: #f1f6f1;
+  color: #4d7758;
+
+  border: 1px solid #e1ebe2;
+
+  padding: 13px 20px;
+  border-radius: 12px;
+
+  font-size: 14px;
+}
+
+.quick-button:hover {
+  background: #e1efe3;
+  transform: translateY(-2px);
+}
+
+.test-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #e9eee9;
+}
+
+.test-section h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.test-section p {
+  font-size: 13px;
+  color: #879187;
+}
+
+.test-section button {
+  background: #edf5ee;
+  color: #4b8b60;
+
+  padding: 12px 18px;
+  border-radius: 10px;
+
+  font-weight: 600;
+}
+
+.test-section button:hover {
+  background: #dcebdd;
+}
+
+.test-section button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.footer {
+  text-align: center;
+  color: #a0aaa1;
+
+  font-size: 12px;
+  margin-top: 30px;
+}
+
+@media (max-width: 650px) {
+  .container {
+    padding: 20px 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .logo h1 {
+    font-size: 18px;
+  }
+
+  .welcome {
+    padding: 25px;
+  }
+
+  .welcome h2 {
+    font-size: 20px;
+  }
+
+  .welcome-icon {
+    font-size: 40px;
+  }
+
+  .summary {
+    gap: 10px;
+  }
+
+  .summary-card {
+    padding: 15px;
+  }
+
+  .summary-card p {
+    font-size: 12px;
+  }
+
+  .summary-card h3 {
+    font-size: 20px;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
+  .add-button {
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+
+  .medication-card {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .medication-info {
+    gap: 10px;
+  }
+
+  .medication-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .medication-info h3 {
+    font-size: 14px;
+  }
+
+  .medication-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .test-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .quick-add-buttons {
+    gap: 8px;
+  }
+
+  .quick-button {
+    padding: 11px 14px;
+  }
+}
