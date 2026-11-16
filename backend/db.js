@@ -1,5 +1,14 @@
 const mysql = require("mysql2");
-require("dotenv").config();
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({
+  path: path.join(__dirname, ".env"),
+  override: true,
+});
+
+console.log("DB_USER:", process.env.DB_USER ? "설정됨" : "비어 있음");
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "설정됨" : "비어 있음");
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -18,7 +27,6 @@ db.getConnection((err, connection) => {
   }
 
   console.log("MySQL 연결 성공!");
-
   connection.release();
 });
 
