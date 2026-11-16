@@ -68,6 +68,7 @@ async function loadMedications() {
 
     medications = await response.json();
     renderMedications();
+    checkMedicationAlarms();
   } catch (error) {
     console.error("복약 목록 불러오기 실패:", error);
     medicationList.innerHTML =
@@ -139,6 +140,42 @@ function renderMedications() {
 
   document.querySelectorAll(".delete-button").forEach(function (button) {
     button.onclick = handleDeleteClick;
+  });
+}
+
+// 복용 시간이 되었는지 확인하는 함수
+function checkMedicationAlarms() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  const today = `${year}-${month}-${day}`;
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+    now.getMinutes(),
+  ).padStart(2, "0")}`;
+
+  medications.forEach((medication) => {
+    const medicationTime = String(medication.time).slice(0, 5);
+
+    if (medicationTime !== currentTime) return;
+    if (!medication.schedule_id) return;
+
+    // 같은 날짜, 같은 일정에는 알림이 한 번만 울리도록 설정
+    const alarmKey = `medicationAlarm_${today}_${medication.schedule_id}`;
+
+    if (localStorage.getItem(alarmKey) === "sent") return;
+
+    new Notification(`💊 ${medication.name} 복용 시간`, {
+      body: `${medicationTime}입니다. 복약 목록을 확인해 주세요!`,
+      requireInteraction: true,
+    });
+
+    localStorage.setItem(alarmKey, "sent");
   });
 }
 
@@ -249,7 +286,7 @@ quickButtons.forEach(function (button) {
     if (time === null) return;
 
     if (!/^\d{2}:\d{2}$/.test(time)) {
-      alert("시간은 08:00 형식으로 입력해 주세요.");
+      alert("시간은 00:00 형식으로 입력해 주세요.");
       return;
     }
 
@@ -258,37 +295,45 @@ quickButtons.forEach(function (button) {
 });
 
 // 10초 뒤 테스트 알림
-testNotificationButton.onclick = async function () {
+testNotificationButton.addEventListener("click", async () => {
   if (!("Notification" in window)) {
     alert("이 브라우저는 알림 기능을 지원하지 않습니다.");
     return;
   }
 
-  if (Notification.permission === "denied") {
-    alert("브라우저 설정에서 알림 권한을 허용해 주세요.");
-    return;
+  let permission = Notification.permission;
+
+  if (permission !== "granted") {
+    permission = await Notification.requestPermission();
   }
 
-  if (Notification.permission !== "granted") {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      alert("알림 권한이 허용되지 않았습니다.");
-      return;
-    }
+  if (permission !== "granted") {
+    alert("브라우저 알림 권한을 허용해 주세요.");
+    return;
   }
 
   testNotificationButton.disabled = true;
   testNotificationButton.textContent = "알림 대기 중...";
 
-  setTimeout(function () {
-    new Notification("복약 체크 타이머", {
+  setTimeout(() => {
+    const notification = new Notification("💊 복약 체크 타이머", {
       body: "알림 테스트입니다. 복약 시간을 확인해 보세요!",
+      requireInteraction: true,
     });
+
+    notification.onshow = () => {
+      console.log("알림이 정상적으로 표시되었습니다!");
+    };
+
+    notification.onerror = (error) => {
+      console.log("알림 오류:", error);
+    };
 
     testNotificationButton.disabled = false;
     testNotificationButton.textContent = "10초 뒤 알림 테스트";
   }, 10000);
-};
+});
 
 displayDate();
 loadMedications();
+setInterval(checkMedicationAlarms, 15000);
