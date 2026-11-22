@@ -15,7 +15,14 @@ app.get("/", function (req, res) {
 app.get("/api/medications", function (req, res) {
   const today = req.query.date;
 
-  if (!today || !/^\d{4}-\d{2}-\d{2}$/.test(today)) {
+  const dateParts = today ? today.split("-") : [];
+
+  if (
+    dateParts.length !== 3 ||
+    dateParts[0].length !== 4 ||
+    dateParts[1].length !== 2 ||
+    dateParts[2].length !== 2
+  ) {
     res.status(400).json({
       message: "날짜를 YYYY-MM-DD 형식으로 보내 주세요.",
     });
@@ -59,12 +66,39 @@ app.post("/api/medications", function (req, res) {
 
   if (
     typeof name !== "string" ||
-    !name.trim() ||
-    typeof time !== "string" ||
-    !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(time)
+    name.trim() === "" ||
+    typeof time !== "string"
   ) {
     res.status(400).json({
       message: "올바른 약 이름과 복용 시간을 입력해 주세요.",
+    });
+    return;
+  }
+
+  const timeParts = time.split(":");
+
+  if (timeParts.length !== 2) {
+    res.status(400).json({
+      message: "복용 시간을 올바르게 입력해 주세요.",
+    });
+    return;
+  }
+
+  const hour = Number(timeParts[0]);
+  const minute = Number(timeParts[1]);
+
+  if (
+    timeParts[0].length !== 2 ||
+    timeParts[1].length !== 2 ||
+    isNaN(hour) ||
+    isNaN(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    res.status(400).json({
+      message: "복용 시간을 올바르게 입력해 주세요.",
     });
     return;
   }
@@ -82,6 +116,7 @@ app.post("/api/medications", function (req, res) {
     }
 
     const medicationId = result.insertId;
+
     const scheduleSql = `
       INSERT INTO medication_schedules
         (medication_id, time)
@@ -116,11 +151,15 @@ app.post("/api/medication-records", function (req, res) {
   const takenDate = req.body.takenDate;
   const completed = req.body.completed;
 
+  const dateParts = typeof takenDate === "string" ? takenDate.split("-") : [];
+
   if (
     !Number.isInteger(scheduleId) ||
     scheduleId <= 0 ||
-    !takenDate ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(takenDate) ||
+    dateParts.length !== 3 ||
+    dateParts[0].length !== 4 ||
+    dateParts[1].length !== 2 ||
+    dateParts[2].length !== 2 ||
     typeof completed !== "boolean"
   ) {
     res.status(400).json({
@@ -189,6 +228,7 @@ app.delete("/api/medications/:id", function (req, res) {
 });
 
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, function () {
   console.log("서버 실행 중: http://localhost:" + PORT);
 });

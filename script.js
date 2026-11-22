@@ -40,16 +40,42 @@ function getMedicationIcon(name) {
 
 // 입력값의 특수문자를 HTML 문자로 변환
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, function (character) {
-    const entities = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    };
-    return entities[character];
-  });
+  let result = String(value);
+
+  result = result.split("&").join("&amp;");
+  result = result.split("<").join("&lt;");
+  result = result.split(">").join("&gt;");
+  result = result.split('"').join("&quot;");
+  result = result.split("'").join("&#039;");
+
+  return result;
+}
+
+// 시간 형식 확인
+function checkTime(time) {
+  const timeParts = time.split(":");
+
+  if (timeParts.length !== 2) {
+    return false;
+  }
+
+  const hour = Number(timeParts[0]);
+  const minute = Number(timeParts[1]);
+
+  if (
+    timeParts[0].length !== 2 ||
+    timeParts[1].length !== 2 ||
+    isNaN(hour) ||
+    isNaN(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 // 서버에서 오늘의 약 목록 가져옴
@@ -269,7 +295,7 @@ addButton.onclick = async function () {
   const time = prompt("복용 시간을 입력해 주세요. (예: 08:00)");
   if (time === null) return;
 
-  if (!/^\d{2}:\d{2}$/.test(time)) {
+  if (!checkTime(time)) {
     alert("시간은 00:00 형식으로 입력해 주세요.");
     return;
   }
@@ -279,13 +305,15 @@ addButton.onclick = async function () {
 
 // 자주 등록하는 약 버튼
 const quickButtons = document.querySelectorAll(".quick-button");
+
 quickButtons.forEach(function (button) {
   button.onclick = async function () {
     const name = button.dataset.name;
     const time = prompt(name + " 복용 시간을 입력해 주세요. (예: 08:00)");
+
     if (time === null) return;
 
-    if (!/^\d{2}:\d{2}$/.test(time)) {
+    if (!checkTime(time)) {
       alert("시간은 00:00 형식으로 입력해 주세요.");
       return;
     }
