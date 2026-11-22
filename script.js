@@ -362,6 +362,22 @@ testNotificationButton.addEventListener("click", async () => {
   }, 10000);
 });
 
+// 로그아웃
+const logoutButton = document.getElementById("logoutButton");
+
+logoutButton.addEventListener("click", function () {
+  const confirmLogout = confirm("로그아웃 하시겠습니까?");
+
+  if (confirmLogout) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    alert("로그아웃되었습니다.");
+
+    location.href = "login.html";
+  }
+});
+
 displayDate();
 loadMedications();
 setInterval(checkMedicationAlarms, 15000);
