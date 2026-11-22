@@ -6,6 +6,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", require("./routes/auth"));
 
 app.get("/", function (req, res) {
   res.send("스마트 복약 체크 타이머 서버 실행 중!");
