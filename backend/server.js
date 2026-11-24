@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
+const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
@@ -12,9 +13,10 @@ app.get("/", function (req, res) {
   res.send("스마트 복약 체크 타이머 서버 실행 중!");
 });
 
-// 오늘 날짜의 약 목록과 복용 완료 여부 가져오기
-app.get("/api/medications", function (req, res) {
+// 오늘 날짜의 약 목록과 복용 완료 여부
+app.get("/api/medications", authMiddleware, function (req, res) {
   const today = req.query.date;
+  const userId = req.user.id;
 
   const dateParts = today ? today.split("-") : [];
 
@@ -24,10 +26,9 @@ app.get("/api/medications", function (req, res) {
     dateParts[1].length !== 2 ||
     dateParts[2].length !== 2
   ) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "날짜를 YYYY-MM-DD 형식으로 보내 주세요.",
     });
-    return;
   }
 
   const sql = `
@@ -44,16 +45,16 @@ app.get("/api/medications", function (req, res) {
     LEFT JOIN medication_records
       ON medication_schedules.id = medication_records.schedule_id
       AND medication_records.taken_date = ?
+    WHERE medications.user_id = ?
     ORDER BY medication_schedules.time ASC, medications.id DESC
   `;
 
-  db.query(sql, [today], function (err, results) {
+  db.query(sql, [today, userId], function (err, results) {
     if (err) {
       console.log(err);
-      res.status(500).json({
+      return res.status(500).json({
         message: "약 목록을 불러오지 못했습니다.",
       });
-      return;
     }
 
     res.json(results);
@@ -61,59 +62,41 @@ app.get("/api/medications", function (req, res) {
 });
 
 // 약 등록
-app.post("/api/medications", function (req, res) {
+app.post("/api/medications", authMiddleware, function (req, res) {
   const name = req.body.name;
   const time = req.body.time;
+  const userId = req.user.id;
 
   if (
     typeof name !== "string" ||
     name.trim() === "" ||
     typeof time !== "string"
   ) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "올바른 약 이름과 복용 시간을 입력해 주세요.",
     });
-    return;
   }
 
-  const timeParts = time.split(":");
+  const cleanTime = time.trim();
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-  if (timeParts.length !== 2) {
-    res.status(400).json({
+  if (!timeRegex.test(cleanTime)) {
+    return res.status(400).json({
       message: "복용 시간을 올바르게 입력해 주세요.",
     });
-    return;
-  }
-
-  const hour = Number(timeParts[0]);
-  const minute = Number(timeParts[1]);
-
-  if (
-    timeParts[0].length !== 2 ||
-    timeParts[1].length !== 2 ||
-    isNaN(hour) ||
-    isNaN(minute) ||
-    hour < 0 ||
-    hour > 23 ||
-    minute < 0 ||
-    minute > 59
-  ) {
-    res.status(400).json({
-      message: "복용 시간을 올바르게 입력해 주세요.",
-    });
-    return;
   }
 
   const cleanName = name.trim();
-  const sql = "INSERT INTO medications (name) VALUES (?)";
+  const dbTime = `${cleanTime}:00`;
 
-  db.query(sql, [cleanName], function (err, result) {
+  const sql = "INSERT INTO medications (user_id, name) VALUES (?, ?)";
+
+  db.query(sql, [userId, cleanName], function (err, result) {
     if (err) {
       console.log(err);
-      res.status(500).json({
+      return res.status(500).json({
         message: "약 등록에 실패했습니다.",
       });
-      return;
     }
 
     const medicationId = result.insertId;
@@ -126,14 +109,13 @@ app.post("/api/medications", function (req, res) {
 
     db.query(
       scheduleSql,
-      [medicationId, time],
+      [medicationId, dbTime],
       function (scheduleErr, scheduleResult) {
         if (scheduleErr) {
           console.log(scheduleErr);
-          res.status(500).json({
+          return res.status(500).json({
             message: "복용 일정 등록에 실패했습니다.",
           });
-          return;
         }
 
         res.status(201).json({
@@ -146,8 +128,8 @@ app.post("/api/medications", function (req, res) {
   });
 });
 
-// 복용 완료 상태 저장 또는 변경
-app.post("/api/medication-records", function (req, res) {
+// 복용 완료 상태 저장 or 변경
+app.post("/api/medication-records", authMiddleware, function (req, res) {
   const scheduleId = Number(req.body.scheduleId);
   const takenDate = req.body.takenDate;
   const completed = req.body.completed;
@@ -163,63 +145,89 @@ app.post("/api/medication-records", function (req, res) {
     dateParts[2].length !== 2 ||
     typeof completed !== "boolean"
   ) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "복용 기록 정보가 올바르지 않습니다.",
     });
-    return;
   }
 
-  const sql = `
-    INSERT INTO medication_records
-      (schedule_id, taken_date, completed, completed_at)
-    VALUES (?, ?, ?, IF(?, NOW(), NULL))
-    ON DUPLICATE KEY UPDATE
-      completed = VALUES(completed),
-      completed_at = IF(VALUES(completed) = TRUE, NOW(), NULL)
+  const userId = req.user.id;
+
+  // 해당 복용 일정이 로그인한 사용자의 것인지 확인
+  const checkSql = `
+    SELECT medication_schedules.id
+    FROM medication_schedules
+    JOIN medications
+      ON medication_schedules.medication_id = medications.id
+    WHERE medication_schedules.id = ?
+      AND medications.user_id = ?
   `;
 
-  db.query(sql, [scheduleId, takenDate, completed, completed], function (err) {
-    if (err) {
-      console.log(err);
-      res.status(500).json({
-        message: "복용 기록 저장에 실패했습니다.",
+  db.query(checkSql, [scheduleId, userId], function (checkErr, results) {
+    if (checkErr) {
+      console.log(checkErr);
+      return res.status(500).json({
+        message: "복용 일정 확인에 실패했습니다.",
       });
-      return;
     }
 
-    res.json({
-      message: "복용 상태가 저장되었습니다.",
-    });
+    if (results.length === 0) {
+      return res.status(404).json({
+        message: "해당 복용 일정을 찾을 수 없습니다.",
+      });
+    }
+
+    const sql = `
+      INSERT INTO medication_records
+        (schedule_id, taken_date, completed, completed_at)
+      VALUES (?, ?, ?, IF(?, NOW(), NULL))
+      ON DUPLICATE KEY UPDATE
+        completed = VALUES(completed),
+        completed_at = IF(VALUES(completed) = TRUE, NOW(), NULL)
+    `;
+
+    db.query(
+      sql,
+      [scheduleId, takenDate, completed, completed],
+      function (err) {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({
+            message: "복용 기록 저장에 실패했습니다.",
+          });
+        }
+
+        res.json({
+          message: "복용 상태가 저장되었습니다.",
+        });
+      },
+    );
   });
 });
 
 // 약 삭제
-app.delete("/api/medications/:id", function (req, res) {
+app.delete("/api/medications/:id", authMiddleware, function (req, res) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "올바른 약 번호가 아닙니다.",
     });
-    return;
   }
 
-  const sql = "DELETE FROM medications WHERE id = ?";
+  const sql = "DELETE FROM medications WHERE id = ? AND user_id = ?";
 
-  db.query(sql, [id], function (err, result) {
+  db.query(sql, [id, req.user.id], function (err, result) {
     if (err) {
       console.log(err);
-      res.status(500).json({
+      return res.status(500).json({
         message: "약 삭제에 실패했습니다.",
       });
-      return;
     }
 
     if (result.affectedRows === 0) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "해당 약을 찾을 수 없습니다.",
       });
-      return;
     }
 
     res.json({

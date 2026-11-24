@@ -33,7 +33,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10); // 사용자가 입력한 비밀번호를 해시처리 후 저장
 
     await db
       .promise()

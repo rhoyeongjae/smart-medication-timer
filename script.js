@@ -12,6 +12,30 @@ const todayDate = document.getElementById("todayDate");
 
 let medications = [];
 
+// 로그인 토큰 가져오기
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+// 인증이 필요한 API 요청에 사용할 헤더
+function getAuthHeaders() {
+  return {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + getToken(),
+  };
+}
+
+// 로그인 여부 확인
+function checkLogin() {
+  if (!getToken()) {
+    alert("로그인이 필요합니다.");
+    location.href = "login.html";
+    return false;
+  }
+
+  return true;
+}
+
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -80,19 +104,34 @@ function checkTime(time) {
 
 // 서버에서 오늘의 약 목록 가져옴
 async function loadMedications() {
+  if (!checkLogin()) return;
+
   medicationList.innerHTML =
     '<p class="empty-message">복약 목록을 불러오는 중입니다...</p>';
 
   try {
     const response = await fetch(
       API_URL + "/medications?date=" + getTodayDate(),
+      {
+        headers: getAuthHeaders(),
+      },
     );
 
-    if (!response.ok) {
-      throw new Error("약 목록을 불러오지 못했습니다.");
+    const result = await response.json();
+
+    if (response.status === 401) {
+      alert("로그인 정보가 만료되었습니다. 다시 로그인해 주세요.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      location.href = "login.html";
+      return;
     }
 
-    medications = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || "약 목록을 불러오지 못했습니다.");
+    }
+
+    medications = result;
     renderMedications();
     checkMedicationAlarms();
   } catch (error) {
@@ -191,7 +230,6 @@ function checkMedicationAlarms() {
     if (medicationTime !== currentTime) return;
     if (!medication.schedule_id) return;
 
-    // 같은 날짜, 같은 일정에는 알림이 한 번만 울리도록 설정
     const alarmKey = `medicationAlarm_${today}_${medication.schedule_id}`;
 
     if (localStorage.getItem(alarmKey) === "sent") return;
@@ -214,11 +252,16 @@ async function addMedication(name, time) {
     return;
   }
 
+  if (!checkLogin()) return;
+
   try {
     const response = await fetch(API_URL + "/medications", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: cleanName, time: time }),
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        name: cleanName,
+        time: time,
+      }),
     });
 
     const result = await response.json();
@@ -237,6 +280,8 @@ async function addMedication(name, time) {
 
 // 약 삭제
 async function handleDeleteClick(event) {
+  if (!checkLogin()) return;
+
   const medicationId = event.currentTarget.dataset.medicationId;
 
   if (!confirm("이 약을 삭제할까요?")) return;
@@ -244,7 +289,9 @@ async function handleDeleteClick(event) {
   try {
     const response = await fetch(API_URL + "/medications/" + medicationId, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     });
+
     const result = await response.json();
 
     if (!response.ok) {
@@ -260,6 +307,8 @@ async function handleDeleteClick(event) {
 
 // 복용 완료 또는 취소
 async function handleCompleteClick(event) {
+  if (!checkLogin()) return;
+
   const button = event.currentTarget;
   const scheduleId = Number(button.dataset.scheduleId);
   const wasCompleted = button.dataset.completed === "true";
@@ -267,13 +316,14 @@ async function handleCompleteClick(event) {
   try {
     const response = await fetch(API_URL + "/medication-records", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         scheduleId: scheduleId,
         takenDate: getTodayDate(),
         completed: !wasCompleted,
       }),
     });
+
     const result = await response.json();
 
     if (!response.ok) {
@@ -300,7 +350,7 @@ addButton.onclick = async function () {
     return;
   }
 
-  await addMedication(name, time + ":00");
+  await addMedication(name, time);
 };
 
 // 자주 등록하는 약 버튼
@@ -318,7 +368,7 @@ quickButtons.forEach(function (button) {
       return;
     }
 
-    await addMedication(name, time + ":00");
+    await addMedication(name, time);
   };
 });
 
